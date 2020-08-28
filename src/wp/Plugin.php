@@ -73,7 +73,7 @@ abstract class Plugin
      *
      * @return void
      */
-    protected function onInstall(): void
+    protected function onActivate(): void
     {
         if ($this->generate_mu) {
             $this->generateMUPluginFile();
@@ -85,7 +85,7 @@ abstract class Plugin
      *
      * @return void
      */
-    protected function onUninstall(): void
+    protected function onDeactivate(): void
     {
         if ($this->generate_mu) {
             $this->removeMUPluginFile();
