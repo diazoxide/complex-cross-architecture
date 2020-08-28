@@ -1,0 +1,19 @@
+{
+  "name": "novembit/complex-cross-architecture",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "aaron",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+  },
+  "autoload": {
+    "psr-4": {
+      "NovemBit\\CCA\\": "src/"
+    }
+  }
+}
