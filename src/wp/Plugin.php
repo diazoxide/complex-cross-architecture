@@ -4,9 +4,10 @@
 namespace NovemBit\CCA\wp;
 
 
+use NovemBit\CCA\common\ComponentOwner;
 use RuntimeException;
 
-abstract class Plugin
+abstract class Plugin extends ComponentOwner
 {
     /**
      * Main plugin file
@@ -29,6 +30,7 @@ abstract class Plugin
      * @var static
      * */
     private static $instance;
+
 
     /**
      * @param null $plugin_file
@@ -61,6 +63,8 @@ abstract class Plugin
             register_deactivation_hook($this->getPluginFile(), [$this, 'onDeactivate']);
         }
 
+        $this->initComponents();
+        
         $this->main();
     }
 
@@ -78,7 +82,7 @@ abstract class Plugin
      */
     protected function onActivate(): void
     {
-        if ($this->generate_mu) {
+        if ($this->early_init) {
             $this->generateMUPluginFile();
         }
     }
@@ -90,7 +94,7 @@ abstract class Plugin
      */
     protected function onDeactivate(): void
     {
-        if ($this->generate_mu) {
+        if ($this->early_init) {
             $this->removeMUPluginFile();
         }
     }
