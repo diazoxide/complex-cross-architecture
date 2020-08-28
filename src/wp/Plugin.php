@@ -16,9 +16,12 @@ abstract class Plugin
     private $plugin_file;
 
     /**
+     * Run plugin on mu plugins loaded action
+     * Generate MU plugin and run plugin instance earlier
+     *
      * @var bool
      */
-    protected $generate_mu = false;
+    protected $early_init = false;
 
     /**
      * Main singleton instance of class
@@ -51,11 +54,11 @@ abstract class Plugin
         $this->plugin_file = $plugin_file;
 
         if (function_exists('register_activation_hook')) {
-            register_activation_hook($this->getPluginFile(), [$this, 'onInstall']);
+            register_activation_hook($this->getPluginFile(), [$this, 'onActivate']);
         }
 
         if (function_exists('register_deactivation_hook')) {
-            register_deactivation_hook($this->getPluginFile(), [$this, 'onUninstall']);
+            register_deactivation_hook($this->getPluginFile(), [$this, 'onDeactivate']);
         }
 
         $this->main();
@@ -108,8 +111,7 @@ abstract class Plugin
         $mu = WPMU_PLUGIN_DIR . '/' . $this->getMUPluginName() . '.php';
         $content = '<?php' . PHP_EOL;
         $content .= ' // This is auto generated file' . PHP_EOL;
-        $content .= 'include_once WP_PLUGIN_DIR."/' . $this->getPluginBasename() . '/' . $this->getMUPluginName(
-            ) . '.php";';
+        $content .= 'include_once WP_PLUGIN_DIR."/' . $this->getPluginBasename() . '";';
         return file_put_contents($mu, $content) ? true : false;
     }
 
