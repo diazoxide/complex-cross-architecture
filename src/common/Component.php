@@ -4,7 +4,7 @@
 namespace NovemBit\CCA\common;
 
 
-abstract class Component extends ComponentOwner
+abstract class Component extends Container
 {
 
     /**
@@ -14,10 +14,10 @@ abstract class Component extends ComponentOwner
 
     /**
      * Component constructor.
-     * @param ComponentOwner|null $parent
+     * @param Container|null $parent
      * @param array $params
      */
-    private function __construct(?ComponentOwner $parent = null, $params = [])
+    private function __construct(?Container $parent = null, $params = [])
     {
         $this->parent = $parent;
 
@@ -32,11 +32,11 @@ abstract class Component extends ComponentOwner
     abstract public function main(?array $params = []): void;
 
     /**
-     * @param ComponentOwner|null $parent
+     * @param Container|null $parent
      * @param array $params
      * @return static
      */
-    public static function init(?ComponentOwner $parent = null, $params = []): self
+    public static function init(?Container $parent = null, $params = []): self
     {
         return new static($parent, $params);
     }
@@ -44,7 +44,7 @@ abstract class Component extends ComponentOwner
     /**
      * @return $this|null
      */
-    public function getParent(): ?ComponentOwner
+    public function getParent(): ?Container
     {
         return $this->parent;
     }

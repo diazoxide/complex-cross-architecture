@@ -4,10 +4,10 @@
 namespace NovemBit\CCA\wp;
 
 
-use NovemBit\CCA\common\ComponentOwner;
+use NovemBit\CCA\common\Container;
 use RuntimeException;
 
-abstract class Plugin extends ComponentOwner
+abstract class Plugin extends Container
 {
     /**
      * Main plugin file
@@ -64,7 +64,7 @@ abstract class Plugin extends ComponentOwner
         }
 
         $this->initComponents();
-        
+
         $this->main();
     }
 
