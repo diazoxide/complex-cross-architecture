@@ -4,12 +4,13 @@
 namespace NovemBit\CCA\common;
 
 
-use Psr\Container\ContainerInterface;
-
-abstract class Container implements ContainerInterface
+abstract class Container
 {
 
-    private $instances;
+    /**
+     * @var array
+     * */
+    public $instances = [];
 
     /**
      * @var null|array
@@ -28,6 +29,8 @@ abstract class Container implements ContainerInterface
                 throw new \RuntimeException('SubComponent name must be declared in components array as key.');
             }
 
+            $name = self::toSnakeCase($name);
+
             $config = [];
             if (is_array($component)) {
                 $config = $component[1];
@@ -36,7 +39,6 @@ abstract class Container implements ContainerInterface
 
             if (class_exists($component) && is_subclass_of($component, Component::class)) {
                 $this->instances[$name] = $component::init($this, $config);
-                $this->{$name} = &$this->instances[$name];
             }
         }
     }
@@ -50,7 +52,7 @@ abstract class Container implements ContainerInterface
      * @param mixed $name
      * @return bool
      */
-    public function has($name): bool
+    public function hasComponent($name): bool
     {
         return isset($this->instances[$name]);
     }
@@ -59,19 +61,31 @@ abstract class Container implements ContainerInterface
      * @param mixed $name
      * @return mixed|null
      */
-    public function get($name): ?Component
+    public function getComponent($name): ?Component
     {
         return $this->instances[$name] ?? null;
     }
 
-    protected $values = array();
+    public function __call($name, $arguments)
+    {
+        $prefix = substr($name, 0, 3);
+
+        $key = ltrim(substr($name, 3), '_');
+
+        if ($prefix === 'get' && ($method_name = self::toSnakeCase($key)) && isset($this->instances[$method_name])){
+            return $this->instances[$method_name];
+        } elseif (is_callable([$this, $name])) {
+            trigger_error('Call to undefined method ' . __CLASS__ . '::' . $name . '()', E_USER_ERROR);
+        }
+    }
 
     public function __get($key)
     {
-        return $this->instances[self::toSnakeCase($key)];
+        return $this->getComponent(self::toSnakeCase($key)) ?? $this->{$key};
     }
 
-    private static function toSnakeCase(string $input):string {
+    private static function toSnakeCase(string $input): string
+    {
         preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $input, $matches);
         $ret = $matches[0];
         foreach ($ret as &$match) {
@@ -80,10 +94,4 @@ abstract class Container implements ContainerInterface
         return implode('_', $ret);
     }
 
-    public function __set($key, $value)
-    {
-        if ($value instanceof Component) {
-            $this->instances[$key] = $value;
-        }
-    }
 }
