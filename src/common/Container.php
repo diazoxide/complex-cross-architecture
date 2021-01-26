@@ -80,7 +80,7 @@ abstract class Container
         if ($prefix === 'get' && ($method_name = self::toSnakeCase($key)) && isset($this->instances[$method_name])) {
             return $this->instances[$method_name];
         } elseif (!isset ($this->{$name}) || !is_callable([$this, $name])) {
-            trigger_error('Call to undefined method ' . __CLASS__ . '::' . $name . '()', E_USER_ERROR);
+            trigger_error('Call to undefined method ' . static::class . '::' . $name . '()', E_USER_ERROR);
         }
 
         return $this->{$name};

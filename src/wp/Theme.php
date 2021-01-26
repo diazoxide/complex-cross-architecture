@@ -5,7 +5,6 @@ namespace NovemBit\CCA\wp;
 
 
 use NovemBit\CCA\common\Container;
-use RuntimeException;
 
 abstract class Theme extends Container
 {
@@ -18,8 +17,6 @@ abstract class Theme extends Container
     private static $instance;
 
     /**
-     * @param null $plugin_file
-     *
      * @return static
      */
     public static function instance(): self
@@ -57,18 +54,22 @@ abstract class Theme extends Container
     /**
      * Trigger on plugin install
      *
+     * @param $oldname
+     * @param bool $oldtheme
      * @return void
      */
-    protected function onActivate($oldname, $oldtheme = false): void
+    public function onActivate($oldname, $oldtheme = false): void
     {
     }
 
     /**
      * Trigger on plugin uninstall
      *
+     * @param $newname
+     * @param $newtheme
      * @return void
      */
-    protected function onDeactivate($newname, $newtheme): void
+    public function onDeactivate($newname, $newtheme): void
     {
     }
 
