@@ -66,17 +66,24 @@ abstract class Container
         return $this->instances[$name] ?? null;
     }
 
+    /**
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
     public function __call($name, $arguments)
     {
         $prefix = substr($name, 0, 3);
 
         $key = ltrim(substr($name, 3), '_');
 
-        if ($prefix === 'get' && ($method_name = self::toSnakeCase($key)) && isset($this->instances[$method_name])){
+        if ($prefix === 'get' && ($method_name = self::toSnakeCase($key)) && isset($this->instances[$method_name])) {
             return $this->instances[$method_name];
-        } elseif (is_callable([$this, $name])) {
+        } elseif (!isset ($this->{$name}) || !is_callable([$this, $name])) {
             trigger_error('Call to undefined method ' . __CLASS__ . '::' . $name . '()', E_USER_ERROR);
         }
+
+        return $this->{$name};
     }
 
     public function __get($key)
