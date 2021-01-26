@@ -34,7 +34,6 @@ abstract class Theme extends Container
     /**
      * Bootstrap constructor.
      *
-     * @param $plugin_file
      */
     private function __construct()
     {
