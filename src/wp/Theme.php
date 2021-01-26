@@ -22,10 +22,10 @@ abstract class Theme extends Container
      *
      * @return static
      */
-    public static function instance($plugin_file = null): self
+    public static function instance(): self
     {
         if (!isset(self::$instance)) {
-            self::$instance = new static($plugin_file);
+            self::$instance = new static();
         }
 
         return self::$instance;
@@ -36,7 +36,7 @@ abstract class Theme extends Container
      *
      * @param $plugin_file
      */
-    private function __construct($plugin_file)
+    private function __construct()
     {
         if (function_exists('add_action')) {
             add_action("after_switch_theme", [$this, 'onActivate'], 10, 2);
