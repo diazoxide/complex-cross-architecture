@@ -80,7 +80,7 @@ abstract class Plugin extends Container
      *
      * @return void
      */
-    protected function onActivate(): void
+    public function onActivate(): void
     {
         if ($this->early_init) {
             $this->generateMUPluginFile();
@@ -92,7 +92,7 @@ abstract class Plugin extends Container
      *
      * @return void
      */
-    protected function onDeactivate(): void
+    public function onDeactivate(): void
     {
         if ($this->early_init) {
             $this->removeMUPluginFile();
