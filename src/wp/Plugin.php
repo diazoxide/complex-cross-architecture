@@ -29,7 +29,7 @@ abstract class Plugin extends Container
      *
      * @var static
      * */
-    private static $instance;
+    private static $_instance;
 
 
     /**
@@ -37,13 +37,14 @@ abstract class Plugin extends Container
      *
      * @return static
      */
-    public static function instance($plugin_file = null):self
+    public static function instance($plugin_file = null)
     {
-        if (!isset(static::$instance)) {
-            static::$instance = new static($plugin_file);
+        
+        if (!isset(self::$_instances[static::class])) {
+            self::$_instances[static::class] = new static($plugin_file);
         }
 
-        return static::$instance;
+        return self::$_instances[static::class];
     }
 
     /**
