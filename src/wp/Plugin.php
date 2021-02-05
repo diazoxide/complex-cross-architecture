@@ -29,7 +29,7 @@ abstract class Plugin extends Container
      *
      * @var static
      * */
-    private static $_instance;
+    private static $_instances;
 
 
     /**
