@@ -51,7 +51,7 @@ abstract class Plugin extends Container
      *
      * @param $plugin_file
      */
-    private function __construct($plugin_file)
+    protected function __construct($plugin_file)
     {
         $this->plugin_file = $plugin_file;
 
@@ -66,14 +66,9 @@ abstract class Plugin extends Container
         $this->initComponents();
 
         $this->main();
-    }
 
-    /**
-     * Main plugin run method
-     *
-     * @return void
-     */
-    abstract protected function main():void;
+        parent::__construct();
+    }
 
     /**
      * Trigger on plugin install

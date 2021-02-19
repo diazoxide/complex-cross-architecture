@@ -37,7 +37,7 @@ abstract class Theme extends Container
             add_action("switch_theme", [$this, 'onDeactivate'], 10, 2);
         }
 
-        parent::__construct(null, []);
+        parent::__construct();
     }
 
     /**
