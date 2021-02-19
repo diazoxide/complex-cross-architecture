@@ -4,8 +4,6 @@
 namespace NovemBit\CCA\wp;
 
 
-use NovemBit\CCA\common\Container;
-
 abstract class Theme extends Container
 {
 
@@ -32,24 +30,15 @@ abstract class Theme extends Container
      * Bootstrap constructor.
      *
      */
-    private function __construct()
+    protected function __construct()
     {
         if (function_exists('add_action')) {
             add_action("after_switch_theme", [$this, 'onActivate'], 10, 2);
             add_action("switch_theme", [$this, 'onDeactivate'], 10, 2);
         }
 
-        $this->initComponents();
-
-        $this->main();
+        parent::__construct(null, []);
     }
-
-    /**
-     * Main plugin run method
-     *
-     * @return void
-     */
-    abstract protected function main(): void;
 
     /**
      * Trigger on plugin install

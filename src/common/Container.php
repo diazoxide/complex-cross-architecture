@@ -18,6 +18,11 @@ abstract class Container
     public $components;
 
     /**
+     * @var self|null
+     */
+    private $parent;
+
+    /**
      * Init sub components
      */
     public function initComponents(): void
@@ -37,7 +42,7 @@ abstract class Container
                 $component = [0];
             }
 
-            if (class_exists($component) && is_subclass_of($component, Component::class)) {
+            if (class_exists($component) && is_subclass_of($component, self::class)) {
                 $this->instances[$name] = $component::init($this, $config);
             }
         }
@@ -61,7 +66,7 @@ abstract class Container
      * @param mixed $name
      * @return mixed|null
      */
-    public function getComponent($name): ?Component
+    public function getComponent($name): ?self
     {
         return $this->instances[$name] ?? null;
     }
@@ -86,11 +91,19 @@ abstract class Container
         return $this->{$name};
     }
 
+    /**
+     * @param $key
+     * @return mixed|self
+     */
     public function __get($key)
     {
         return $this->getComponent(self::toSnakeCase($key)) ?? $this->{$key};
     }
 
+    /**
+     * @param string $input
+     * @return string
+     */
     private static function toSnakeCase(string $input): string
     {
         preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $input, $matches);
@@ -101,4 +114,40 @@ abstract class Container
         return implode('_', $ret);
     }
 
+    /**
+     * @param array|null $params
+     */
+    abstract protected function main(?array $params = []): void;
+
+    /**
+     * Component constructor.
+     * @param Container|null $parent
+     * @param array $params
+     */
+    protected function __construct(?Container $parent = null, $params = [])
+    {
+        $this->parent = $parent;
+
+        $this->initComponents();
+
+        $this->main($params);
+    }
+
+    /**
+     * @param Container|null $parent
+     * @param array $params
+     * @return static
+     */
+    public static function init(?Container $parent = null, $params = []): self
+    {
+        return new static($parent, $params);
+    }
+
+    /**
+     * @return $this|null
+     */
+    public function getParent(): ?Container
+    {
+        return $this->parent;
+    }
 }

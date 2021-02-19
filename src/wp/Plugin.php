@@ -4,7 +4,6 @@
 namespace NovemBit\CCA\wp;
 
 
-use NovemBit\CCA\common\Container;
 use RuntimeException;
 
 abstract class Plugin extends Container
