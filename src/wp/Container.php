@@ -53,7 +53,7 @@ abstract class Container extends \NovemBit\CCA\common\Container
             $handle,
             $this->getAssetsRootURI().'/'.$config['url'],
             $config['deps'],
-            $this->getVersion(),
+            $config['version']??$this->getVersion(),
             $config['media']
         );
     }
@@ -84,7 +84,7 @@ abstract class Container extends \NovemBit\CCA\common\Container
             $handle,
             $this->getAssetsRootURI().'/'.$config['url'],
             $config['deps'],
-            $this->getVersion(),
+            $config['version']??$this->getVersion(),
             true
         );
 
