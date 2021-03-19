@@ -65,10 +65,6 @@ abstract class Plugin extends Container
             register_deactivation_hook($this->getPluginFile(), [$this, 'onDeactivate']);
         }
 
-        $this->initComponents();
-
-        $this->main();
-
         parent::__construct();
     }
 
