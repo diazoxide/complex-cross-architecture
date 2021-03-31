@@ -10,7 +10,7 @@
     }
   ],
   "require": {
-    "psr/container": "dev-master"
+    "psr/container": "*"
   },
   "autoload": {
     "psr-4": {
