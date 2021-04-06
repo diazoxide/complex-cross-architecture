@@ -19,41 +19,55 @@ abstract class Container extends \NovemBit\CCA\common\Container
         parent::__construct($parent, $params);
 
 
-        if (!empty($this->scripts) && !empty($this->styles) && !$this->getAssetsRootURI()) {
+        if ((!empty($this->scripts) || !empty($this->styles)) && !$this->getAssetsRootURI()) {
             trigger_error('Component $assets_relative_uri property not defined', E_USER_ERROR);
         }
 
         foreach ($this->styles as $key => &$config) {
-            add_action($config['action'] ?? 'init', function () use ($key, &$config) {
-                unset($config['action']);
-                $this->enqueueStyle($key, $config);
-            });
+            add_action(
+                $config['action'] ?? 'init',
+                function () use ($key, &$config) {
+                    unset($config['action'], $config['priority']);
+                    $this->enqueueStyle($key, $config);
+                },
+                $config['priority'] ?? 10
+            );
         }
 
         foreach ($this->scripts as $key => &$config) {
-            add_action($config['action'] ?? 'init', function () use ($key, &$config) {
-                unset($config['action']);
-                $this->enqueueScript($key, $config);
-            });
+            add_action(
+                $config['action'] ?? 'init',
+                function () use ($key, &$config) {
+                    unset($config['action'], $config['priority']);
+                    $this->enqueueScript($key, $config);
+                },
+                $config['priority'] ?? 10
+            );
         }
-
     }
 
     private function enqueueStyle($handle, $config)
     {
-        $defaults = [
-            'url' => '',
-            'deps' => [],
+        if (isset($config['callback']) && is_callable($config['callback'])) {
+            $config = call_user_func($config['callback']);
+        }
+        $config   = wp_parse_args($config, [
+            'url'     => '',
+            'deps'    => [],
             'version' => $this->getVersion(),
-            'media' => 'all',
-        ];
-        $config = wp_parse_args($config, $defaults);
+            'media'   => 'all',
+            'external' => false,
+        ]);
+
+        if (!$config['url']) {
+            return;
+        }
 
         wp_enqueue_style(
             $handle,
-            $this->getAssetsRootURI().'/'.$config['url'],
+            (!!$config['external'] ? '' : trailingslashit($this->getAssetsRootURI())) . $config['url'],
             $config['deps'],
-            $config['version']??$this->getVersion(),
+            $config['version'],
             $config['media']
         );
     }
@@ -70,22 +84,30 @@ abstract class Container extends \NovemBit\CCA\common\Container
 
     private function enqueueScript($handle, $config)
     {
-        $defaults = [
-            'url' => '',
-            'deps' => [],
-            'version' => $this->getVersion(),
+        if (isset($config['callback']) && is_callable($config['callback'])) {
+            $config = call_user_func($config['callback']);
+        }
+
+        $config   = wp_parse_args($config, [
+            'url'       => '',
+            'deps'      => [],
+            'version'   => $this->getVersion(),
             'in_footer' => false,
-            'data' => []
-        ];
-        $config = wp_parse_args($config, $defaults);
+            'external'  => false,
+            'data'      => [],
+        ]);
+
+        if (!$config['url']) {
+            return;
+        }
 
         // 1. Enqueue
         wp_enqueue_script(
             $handle,
-            $this->getAssetsRootURI().'/'.$config['url'],
+            (!!$config['external'] ? '' : trailingslashit($this->getAssetsRootURI())) . $config['url'],
             $config['deps'],
-            $config['version']??$this->getVersion(),
-            true
+            $config['version'],
+            $config['in_footer']
         );
 
         // 2. Localize
@@ -95,11 +117,12 @@ abstract class Container extends \NovemBit\CCA\common\Container
     }
 
     /**
-     * @param string $handle_name
-     * @param string $name
+     * @param  string  $handle_name
+     * @param  string  $name
      * @param $data
      */
-    public function localizeScript(string $handle_name, string $name, $data){
+    public function localizeScript(string $handle_name, string $name, $data)
+    {
         $this->scripts[$handle_name]['data'][] = [
             'name' => $name,
             'data' => $data
