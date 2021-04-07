@@ -135,18 +135,18 @@ abstract class Plugin extends Container
      * @return mixed
      * @see getPluginBasename
      */
-    public function getPluginDirUrl():string
+    public function getPluginDirUrl($relative = ''):string
     {
-        return plugin_dir_url($this->getPluginFile());
+        return plugin_dir_url($this->getPluginFile()) . $relative;
     }
 
     /**
      * @return string
      * @see plugin_dir_path
      */
-    public function getPluginDirPath():string
+    public function getPluginDirPath($relative = ''):string
     {
-        return plugin_dir_path($this->getPluginFile());
+        return wp_normalize_path(plugin_dir_path($this->getPluginFile()) . $relative);
     }
 
     /**
