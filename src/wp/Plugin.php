@@ -141,6 +141,15 @@ abstract class Plugin extends Container
     }
 
     /**
+     * @return string
+     * @see plugin_dir_path
+     */
+    public function getPluginDirPath():string
+    {
+        return plugin_dir_path($this->getPluginFile());
+    }
+
+    /**
      * @return mixed
      */
     public function getPluginBasename():string
