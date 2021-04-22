@@ -39,7 +39,7 @@ abstract class Container
             $config = [];
             if (is_array($component)) {
                 $config = $component[1];
-                $component = [0];
+                $component = $component[0];
             }
 
             if (class_exists($component) && is_subclass_of($component, self::class)) {
@@ -114,6 +114,9 @@ abstract class Container
         return implode('_', $ret);
     }
 
+    public function beforeInit(): void
+    {}
+
     /**
      * @param array|null $params
      */
@@ -127,6 +130,8 @@ abstract class Container
     protected function __construct(?Container $parent = null, $params = [])
     {
         $this->parent = $parent;
+
+        $this->beforeInit();
 
         $this->initComponents();
 
