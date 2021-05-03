@@ -46,7 +46,48 @@ abstract class Container extends \NovemBit\CCA\common\Container
         }
     }
 
-    private function enqueueStyle($handle, $config)
+    /**
+     * Callback method to edit style tag and modify its attributes
+     * @hooked in "style_loader_tag" filter
+     * @param string  $tag  Current tag
+     * @param string  $handle  Style handle name
+     * @param string  $href  Stylesheet URL
+     * @param string  $media  Style current media attribute
+     * @return string
+     */
+    public function editStyleLoaderTag($tag, $handle)
+    {
+        $styles = array_filter($this->styles, function($style) {
+            return isset($style['attributes']) && !empty($style['attributes']);
+        });
+
+        if (isset($styles[$handle])) {
+            $attrs = [];
+            foreach ($styles[$handle]['attributes'] as $name => $value) {
+                if ('media' === $name) {
+                    $tag = preg_replace('/ media=["|\'].*["\']/', '', $tag);
+                }
+
+                if ($value) {
+                    $attrs[] = $name . '="' . $value . '"';
+                }
+            }
+
+            if (!empty($attrs)) {
+                $attrs[] = '/>';
+                $tag = str_replace('/>', join(' ', $attrs), $tag);
+            }
+        }
+
+        return $tag;
+    }
+
+    /**
+     * Enqueue single style
+     * @param string  $handle  Handle name
+     * @param array  $config  Handle configuration
+     */
+    private function enqueueStyle($handle, array $config)
     {
         if (isset($config['callback']) && is_callable($config['callback'])) {
             $config = call_user_func($config['callback']);
@@ -57,10 +98,15 @@ abstract class Container extends \NovemBit\CCA\common\Container
             'version' => $this->getVersion(),
             'media'   => 'all',
             'external' => false,
+            'attributes' => []
         ]);
 
         if (!$config['url']) {
             return;
+        }
+
+        if (is_array($config['attributes']) && !empty($config['attributes'])) {
+            add_filter('style_loader_tag', [$this, 'editStyleLoaderTag'], 10, 2);
         }
 
         wp_enqueue_style(
@@ -82,7 +128,12 @@ abstract class Container extends \NovemBit\CCA\common\Container
         return $this->version ?? ($this->getParent() ? $this->getParent()->getVersion() : null) ?? 'N/A';
     }
 
-    private function enqueueScript($handle, $config)
+    /**
+     * Enqueue single script
+     * @param string  $handle  Handle name
+     * @param array  $config  Handle configuration
+     */
+    private function enqueueScript($handle, array $config)
     {
         if (isset($config['callback']) && is_callable($config['callback'])) {
             $config = call_user_func($config['callback']);
