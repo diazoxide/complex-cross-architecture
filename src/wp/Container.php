@@ -64,8 +64,8 @@ abstract class Container extends \NovemBit\CCA\common\Container
         if (isset($styles[$handle])) {
             $attrs = [];
             foreach ($styles[$handle]['attributes'] as $name => $value) {
-                if ('media' === $name) {
-                    $tag = preg_replace('/ media=["|\'].*["\']/', '', $tag);
+                if (in_array($name, ['rel', 'media'])) {
+                    $tag = preg_replace('/ ' . $name . '=["|\'].*["\']/', '', $tag);
                 }
 
                 if ($value) {
