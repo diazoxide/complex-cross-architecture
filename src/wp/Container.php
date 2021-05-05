@@ -27,7 +27,10 @@ abstract class Container extends \NovemBit\CCA\common\Container
             add_action(
                 $config['action'] ?? 'init',
                 function () use ($key, &$config) {
-                    unset($config['action'], $config['priority']);
+                    if (isset($config['callback']) && is_callable($config['callback'])) {
+                        $config = array_merge($config, call_user_func($config['callback']));
+                    }
+                    unset($config['action'], $config['callback'], $config['priority']);
                     $this->enqueueStyle($key, $config);
                 },
                 $config['priority'] ?? 10
@@ -38,7 +41,10 @@ abstract class Container extends \NovemBit\CCA\common\Container
             add_action(
                 $config['action'] ?? 'init',
                 function () use ($key, &$config) {
-                    unset($config['action'], $config['priority']);
+                    if (isset($config['callback']) && is_callable($config['callback'])) {
+                        $config = array_merge($config, call_user_func($config['callback']));
+                    }
+                    unset($config['action'], $config['callback'], $config['priority']);
                     $this->enqueueScript($key, $config);
                 },
                 $config['priority'] ?? 10
@@ -51,8 +57,6 @@ abstract class Container extends \NovemBit\CCA\common\Container
      * @hooked in "style_loader_tag" filter
      * @param string  $tag  Current tag
      * @param string  $handle  Style handle name
-     * @param string  $href  Stylesheet URL
-     * @param string  $media  Style current media attribute
      * @return string
      */
     public function editStyleLoaderTag($tag, $handle)
@@ -91,9 +95,6 @@ abstract class Container extends \NovemBit\CCA\common\Container
      */
     private function enqueueStyle($handle, array $config)
     {
-        if (isset($config['callback']) && is_callable($config['callback'])) {
-            $config = call_user_func($config['callback']);
-        }
         $config   = wp_parse_args($config, [
             'url'     => '',
             'deps'    => [],
@@ -137,10 +138,6 @@ abstract class Container extends \NovemBit\CCA\common\Container
      */
     private function enqueueScript($handle, array $config)
     {
-        if (isset($config['callback']) && is_callable($config['callback'])) {
-            $config = call_user_func($config['callback']);
-        }
-
         $config   = wp_parse_args($config, [
             'url'       => '',
             'deps'      => [],
