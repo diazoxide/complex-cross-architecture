@@ -28,7 +28,7 @@ abstract class Container extends \NovemBit\CCA\common\Container
                 $config['action'] ?? 'init',
                 function () use ($key, &$config) {
                     if (isset($config['callback']) && is_callable($config['callback'])) {
-                        $config = array_merge($config, call_user_func($config['callback']));
+                        $config = array_merge($config, (array)call_user_func($config['callback']));
                     }
                     unset($config['action'], $config['callback'], $config['priority']);
                     $this->enqueueStyle($key, $config);
