@@ -73,7 +73,9 @@ abstract class Container extends \NovemBit\CCA\common\Container
                         $tag = preg_replace('/\s' . $name . '=("([^"]+)"|\'([^\']+)\')/', '', $tag);
                     }
 
-                    if ($value) {
+                    if (is_null($value)) {
+                        $attrs[] = $name;
+                    } elseif ($value) {
                         $attrs[] = $name . '="' . $value . '"';
                     }
                 }
@@ -101,11 +103,23 @@ abstract class Container extends \NovemBit\CCA\common\Container
             'version' => $this->getVersion(),
             'media'   => 'all',
             'external' => false,
-            'attributes' => []
+            'attributes' => [],
+            'preload' => []
         ]);
 
         if (!$config['url']) {
             return;
+        }
+
+        if (is_array($config['preload']) && !empty($config['preload'])) {
+            $preload_config = array_merge($config, [
+                'preload' => [],
+                'attributes' => array_merge($config['preload'], [
+                    'rel' => 'preload'
+                ])
+            ]);
+            $this->styles[$handle . '-preload'] = $preload_config;
+            $this->enqueueStyle($handle . '-preload', $preload_config);
         }
 
         if (is_array($config['attributes']) && !empty($config['attributes'])) {
