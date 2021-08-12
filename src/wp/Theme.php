@@ -33,6 +33,7 @@ abstract class Theme extends Container
     protected function __construct()
     {
         $this->assets_root_uri = $this->getParentDirectoryUri();
+        $this->assets_root_path = $this->getParentDirectory();
 
         if (function_exists('add_action')) {
             add_action("after_switch_theme", [$this, 'onActivate'], 10, 2);

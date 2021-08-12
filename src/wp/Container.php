@@ -13,16 +13,10 @@ abstract class Container extends \NovemBit\CCA\common\Container
     protected $version = null;
 
     protected $assets_root_uri = null;
+    protected $assets_root_path = null;
 
-    protected function __construct(?\NovemBit\CCA\common\Container $parent = null, $params = [])
+    private function processStyles()
     {
-        parent::__construct($parent, $params);
-
-
-        if ((!empty($this->scripts) || !empty($this->styles)) && !$this->getAssetsRootURI()) {
-            trigger_error('Component $assets_relative_uri property not defined', E_USER_ERROR);
-        }
-
         foreach ($this->styles as $key => &$config) {
             add_action(
                 $config['action'] ?? 'init',
@@ -45,7 +39,10 @@ abstract class Container extends \NovemBit\CCA\common\Container
                 $config['priority'] ?? 10
             );
         }
-        
+    }
+
+    private function processScripts()
+    {
         foreach ($this->scripts as $key => &$config) {
             add_action(
                 $config['action'] ?? 'init',
@@ -68,6 +65,40 @@ abstract class Container extends \NovemBit\CCA\common\Container
                 $config['priority'] ?? 10
             );
         }
+    }
+
+    protected function __construct(?\NovemBit\CCA\common\Container $parent = null, $params = [])
+    {
+        parent::__construct($parent, $params);
+
+        if ((!empty($this->scripts) || !empty($this->styles)) && !$this->getAssetsRootURI()) {
+            trigger_error('Component $assets_relative_uri property not defined', E_USER_ERROR);
+        }
+
+        $this->processStyles();
+        $this->processScripts();
+    }
+
+    public function getAssetsRootURI( string $relative = '' )
+    {
+        $url = $this->assets_root_uri ?? ($this->getParent() ? $this->getParent()->getAssetsRootURI($relative) : null) ?? null;
+        return $url ? trailingslashit($url) . ltrim($relative, '/') : $url;
+    }
+
+    public function getAssetsRootPath( string $relative = '' )
+    {
+        $path = null;
+        if (isset($this->assets_root_path)) {
+            $path = wp_normalize_path($this->assets_root_path . '/' . $relative);
+        } elseif ($this->getParent()) {
+            $path = $this->getParent()->getAssetsRootPath($relative);
+        }
+        return $path;
+    }
+
+    public function getVersion()
+    {
+        return $this->version ?? ($this->getParent() ? $this->getParent()->getVersion() : null) ?? 'N/A';
     }
 
     /**
@@ -115,15 +146,21 @@ abstract class Container extends \NovemBit\CCA\common\Container
      */
     private function enqueueStyle($handle, array $config)
     {
-        $config   = wp_parse_args($config, [
-            'url'     => '',
-            'deps'    => [],
-            'version' => $this->getVersion(),
-            'media'   => 'all',
-            'external' => false,
-            'attributes' => [],
-            'preload' => []
-        ]);
+        $config = wp_parse_args(
+            $config,
+            [
+                'url'        => '',
+                'deps'       => [],
+                'asset'      => '',
+                'version'    => $this->getVersion(),
+                'media'      => 'all',
+                'external'   => false,
+                'attributes' => [],
+                'preload'    => [],
+                'register'   => false,
+                'withPath'   => false,
+            ]
+        );
 
         if (!$config['url']) {
             return;
@@ -134,7 +171,9 @@ abstract class Container extends \NovemBit\CCA\common\Container
                 'preload' => [],
                 'attributes' => array_merge($config['preload'], [
                     'rel' => 'preload'
-                ])
+                ]),
+                'register' => false,
+                'withPath' => false,
             ]);
             $this->styles[$handle . '-preload'] = $preload_config;
             $this->enqueueStyle($handle . '-preload', $preload_config);
@@ -144,23 +183,38 @@ abstract class Container extends \NovemBit\CCA\common\Container
             add_filter('style_loader_tag', [$this, 'editStyleLoaderTag'], 10, 2);
         }
 
-        wp_enqueue_style(
-            $handle,
-            (!!$config['external'] ? '' : trailingslashit($this->getAssetsRootURI())) . $config['url'],
-            $config['deps'],
-            $config['version'],
-            $config['media']
-        );
-    }
+        $config['dependencies'] = $config['deps'];
+        unset($config['deps']);
+        if ($config['asset']) {
+            $assets = [];
+            $asset_file = $this->getAssetsRootPath($config['asset']);
+            if ( file_exists( $asset_file ) ) {
+                $assets = include( $asset_file );
+            }
+            $config = wp_parse_args($assets, $config);
+        }
 
-    public function getAssetsRootURI()
-    {
-        return $this->assets_root_uri ?? ($this->getParent() ? $this->getParent()->getAssetsRootURI() : null) ?? false;
-    }
+        if (!!$config['register']) {
+            wp_register_style(
+                $handle,
+                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
+                $config['dependencies'],
+                $config['version'],
+                $config['media']
+            );
+        } else {
+            wp_enqueue_style(
+                $handle,
+                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
+                $config['dependencies'],
+                $config['version'],
+                $config['media']
+            );
+        }
 
-    public function getVersion()
-    {
-        return $this->version ?? ($this->getParent() ? $this->getParent()->getVersion() : null) ?? 'N/A';
+        if (!!$config['withPath'] && !$config['external']) {
+            wp_style_add_data($handle, 'path', $this->getAssetsRootPath($config['url']));
+        }
     }
 
     /**
@@ -170,27 +224,53 @@ abstract class Container extends \NovemBit\CCA\common\Container
      */
     private function enqueueScript($handle, array $config)
     {
-        $config   = wp_parse_args($config, [
-            'url'       => '',
-            'deps'      => [],
-            'version'   => $this->getVersion(),
-            'in_footer' => false,
-            'external'  => false,
-            'data'      => [],
-        ]);
+        $config = wp_parse_args(
+            $config,
+            [
+                'url'       => '',
+                'deps'      => [],
+                'asset'     => '',
+                'version'   => $this->getVersion(),
+                'in_footer' => false,
+                'external'  => false,
+                'data'      => [],
+                'register'  => false,
+            ]
+        );
 
         if (!$config['url']) {
             return;
         }
 
-        // 1. Enqueue
-        wp_enqueue_script(
-            $handle,
-            (!!$config['external'] ? '' : trailingslashit($this->getAssetsRootURI())) . $config['url'],
-            $config['deps'],
-            $config['version'],
-            $config['in_footer']
-        );
+        $config['dependencies'] = $config['deps'];
+        unset($config['deps']);
+        if ($config['asset']) {
+            $assets = [];
+            $asset_file = $this->getAssetsRootPath($config['asset']);
+            if ( file_exists( $asset_file ) ) {
+                $assets = include( $asset_file );
+            }
+            $config = wp_parse_args($assets, $config);
+        }
+
+        // 1. Register / Enqueue
+        if (!!$config['register']) {
+            wp_register_script(
+                $handle,
+                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
+                $config['dependencies'],
+                $config['version'],
+                $config['in_footer']
+            );
+        } else {
+            wp_enqueue_script(
+                $handle,
+                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
+                $config['dependencies'],
+                $config['version'],
+                $config['in_footer']
+            );
+        }
 
         // 2. Localize
         foreach ($config['data'] as $localize) {
