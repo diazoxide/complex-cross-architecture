@@ -81,8 +81,13 @@ abstract class Container extends \NovemBit\CCA\common\Container
 
     public function getAssetsRootURI( string $relative = '' )
     {
-        $url = $this->assets_root_uri ?? ($this->getParent() ? $this->getParent()->getAssetsRootURI($relative) : null) ?? null;
-        return $url ? trailingslashit($url) . ltrim($relative, '/') : $url;
+        $uri = null;
+        if (isset($this->assets_root_uri)) {
+            $uri = trailingslashit($this->assets_root_uri) . ltrim($relative, '/');
+        } elseif($this->getParent()) {
+            $uri = $this->getParent()->getAssetsRootURI($relative);
+        }
+        return $uri;
     }
 
     public function getAssetsRootPath( string $relative = '' )
