@@ -56,6 +56,7 @@ abstract class Plugin extends Container
         $this->plugin_file = $plugin_file;
 
         $this->assets_root_uri = $this->getPluginDirUrl();
+        $this->assets_root_path = $this->getPluginDirPath();
 
         if (function_exists('register_activation_hook')) {
             register_activation_hook($this->getPluginFile(), [$this, 'onActivate']);
