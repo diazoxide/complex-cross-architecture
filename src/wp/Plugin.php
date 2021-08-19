@@ -4,13 +4,13 @@
 namespace NovemBit\CCA\wp;
 
 
+use NovemBit\CCA\wp\components\Preloader;
 use RuntimeException;
 
 abstract class Plugin extends Container
 {
     /**
      * Main plugin file
-     *
      * @var string
      * */
     private $plugin_file;
@@ -25,11 +25,9 @@ abstract class Plugin extends Container
 
     /**
      * Main singleton instance of class
-     *
-     * @var static
+     * @var array
      * */
-    private static $_instances;
-
+    private static $_instances = [];
 
     /**
      * @param null $plugin_file
@@ -53,11 +51,17 @@ abstract class Plugin extends Container
      */
     protected function __construct($plugin_file)
     {
+        // Configure MU components
+        unset($this->components['preloader']);
+
+        // Setup plugin main file
         $this->plugin_file = $plugin_file;
 
+        // Setup assets data
         $this->assets_root_uri = $this->getPluginDirUrl();
         $this->assets_root_path = $this->getPluginDirPath();
 
+        // Setup hooks
         if (function_exists('register_activation_hook')) {
             register_activation_hook($this->getPluginFile(), [$this, 'onActivate']);
         }
@@ -70,32 +74,30 @@ abstract class Plugin extends Container
     }
 
     /**
-     * Trigger on plugin install
-     *
-     * @return void
+     * Plugin unique name
+     * @return string
      */
-    public function onActivate(): void
+    abstract public function getName(): string;
+
+    /**
+     * Get preloader instance
+     * @return Preloader
+     */
+    final public function getPreloader(): Preloader
     {
-        if ($this->early_init) {
-            $this->generateMUPluginFile();
-        }
+        return Preloader::instance();
     }
 
     /**
-     * Trigger on plugin uninstall
-     *
-     * @return void
+     * @return string
      */
-    public function onDeactivate(): void
+    public function getMUPluginName(): string
     {
-        if ($this->early_init) {
-            $this->removeMUPluginFile();
-        }
+        return $this->getName();
     }
 
     /**
      * Generate MU plugin file
-     *
      * @return bool
      */
     protected function generateMUPluginFile(): bool
@@ -114,8 +116,7 @@ abstract class Plugin extends Container
     }
 
     /**
-     * Remove Generated MU plugin file
-     *
+     * Remove MU plugin file
      * @return bool
      */
     protected function removeMUPluginFile(): bool
@@ -125,52 +126,63 @@ abstract class Plugin extends Container
     }
 
     /**
-     * @return mixed
+     * Gets the basename of a plugin
+     * @return string The name of a plugin
      */
-    public function getPluginFile():string
-    {
-        return $this->plugin_file;
-    }
-
-    /**
-     * @return mixed
-     * @see getPluginBasename
-     */
-    public function getPluginDirUrl($relative = ''):string
-    {
-        return plugin_dir_url($this->getPluginFile()) . $relative;
-    }
-
-    /**
-     * @return string
-     * @see plugin_dir_path
-     */
-    public function getPluginDirPath($relative = ''):string
-    {
-        return wp_normalize_path(plugin_dir_path($this->getPluginFile()) . $relative);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPluginBasename():string
+    public function getPluginBasename(): string
     {
         return plugin_basename($this->getPluginFile());
     }
 
     /**
-     * @return string
+     * Get plugin main file
+     * @return mixed
      */
-    public function getMUPluginName(): string
+    public function getPluginFile(): string
     {
-        return $this->getName();
+        return $this->plugin_file;
     }
 
     /**
-     * Plugin unique name | slug
-     *
+     * Get URL to plugin specific file
+     * @param string $relative File url relative to plugin main URL
      * @return string
      */
-    abstract public function getName(): string;
+    public function getPluginDirUrl(string $relative = ''): string
+    {
+        return plugin_dir_url($this->getPluginFile()) . $relative;
+    }
+
+    /**
+     * Get path to plugin specific file
+     * @param string $relative File path relative to plugin main URL
+     * @return string
+     */
+    public function getPluginDirPath($relative = ''): string
+    {
+        return wp_normalize_path(plugin_dir_path($this->getPluginFile()) . $relative);
+    }
+
+    /**
+     * Callback to execute on plugin activation
+     * @return void
+     */
+    public function onActivate(): void
+    {
+        if ($this->early_init) {
+            $this->generateMUPluginFile();
+        }
+    }
+
+    /**
+     * Callback to execute on plugin deactivation
+     * @return void
+     */
+    public function onDeactivate(): void
+    {
+        if ($this->early_init) {
+            $this->removeMUPluginFile();
+        }
+    }
 
 }

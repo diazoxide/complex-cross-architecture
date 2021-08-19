@@ -1,8 +1,5 @@
 <?php
-
-
 namespace NovemBit\CCA\common;
-
 
 abstract class Container
 {
@@ -10,17 +7,17 @@ abstract class Container
     /**
      * @var array
      * */
-    public $instances = [];
-
-    /**
-     * @var null|array
-     * */
-    public $components;
+    private $instances = [];
 
     /**
      * @var self|null
      */
     private $parent;
+
+    /**
+     * @var null|array
+     * */
+    public $components;
 
     /**
      * Init sub components
@@ -59,7 +56,7 @@ abstract class Container
      */
     public function hasComponent($name): bool
     {
-        return isset($this->instances[$name]);
+        return isset($this->instances[self::toSnakeCase($name)]);
     }
 
     /**
@@ -68,7 +65,7 @@ abstract class Container
      */
     public function getComponent($name): ?self
     {
-        return $this->instances[$name] ?? null;
+        return $this->instances[self::toSnakeCase($name)] ?? null;
     }
 
     /**
@@ -117,6 +114,9 @@ abstract class Container
     public function beforeInit(): void
     {}
 
+    public function afterInit(): void
+    {}
+
     /**
      * @param array|null $params
      */
@@ -136,6 +136,8 @@ abstract class Container
         $this->initComponents();
 
         $this->main($params);
+
+        $this->afterInit();
     }
 
     /**

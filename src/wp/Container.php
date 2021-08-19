@@ -1,87 +1,134 @@
 <?php
-
-
 namespace NovemBit\CCA\wp;
 
+use NovemBit\CCA\wp\components\AssetsManager;
 
 abstract class Container extends \NovemBit\CCA\common\Container
 {
-
+    /**
+     * Component styles
+     * @var array
+     */
     protected $styles = [];
+
+    /**
+     * Get style handle configuration
+     * @param  string  $handle  Handle name
+     * @return array
+     */
+    final public function getStyle(string $handle): array
+    {
+        return $this->styles[$handle] ?? [];
+    }
+
+    /**
+     * Get all styles
+     * @return array
+     */
+    final public function getStyles(): array
+    {
+        return $this->styles;
+    }
+
+    /**
+     * Add single style
+     * @param  string  $handle  Handle name
+     * @param  array  $config  Style configuration
+     */
+    final public function addStyle(string $handle, array $config): void
+    {
+        $this->styles[$handle] = $config;
+    }
+
+    /**
+     * Add bulk styles
+     * @param  array  $styles  Array of styles configuration
+     */
+    final public function addBulkStyles(array $styles): void
+    {
+        $this->styles = array_merge($this->styles, $styles);
+    }
+
+    /**
+     * Component scripts
+     * @var array
+     */
     protected $scripts = [];
 
+    /**
+     * Get script handle configuration
+     * @param  string  $handle  Handle name
+     * @return array
+     */
+    final public function getScript(string $handle): array
+    {
+        return $this->scripts[$handle] ?? [];
+    }
+
+    /**
+     * Get all scripts
+     * @return array
+     */
+    final public function getScripts(): array
+    {
+        return $this->scripts;
+    }
+
+    /**
+     * Localize specific script
+     * @param  string  $handle  Script handle name
+     * @param  string  $name  Variable name
+     * @param mixed  $data  Localize data
+     */
+    final public function localizeScript(string $handle, string $name, $data)
+    {
+        if (isset($this->scripts[$handle])) {
+            $this->scripts[$handle]['data'][] = [
+                'name' => $name,
+                'data' => $data
+            ];
+        }
+    }
+
+    /**
+     * Add single script
+     * @param  string  $handle  Handle name
+     * @param  array  $config  Script configuration
+     */
+    final public function addScripts(string $handle, array $config): void
+    {
+        $this->scripts[$handle] = $config;
+    }
+
+    /**
+     * Add bulk scripts
+     * @param  array  $scripts  Array of scripts configuration
+     */
+    final public function addBulkScripts(array $scripts): void
+    {
+        $this->scripts = array_merge($this->scripts, $scripts);
+    }
+
+    /**
+     * Component version
+     * @var null
+     */
     protected $version = null;
 
+    /**
+     * Component assets root URI
+     * @var null|string
+     */
     protected $assets_root_uri = null;
-    protected $assets_root_path = null;
 
-    private function processStyles()
+    /**
+     * Get component assets URI
+     * @param  string  $relative  Optional: relative URI to specific file
+     * @return string
+     */
+    public function getAssetsRootURI( string $relative = '' ): string
     {
-        foreach ($this->styles as $key => &$config) {
-            add_action(
-                $config['action'] ?? 'init',
-                function () use ($key, &$config) {
-                    if (isset($config['callback']) && is_callable($config['callback'])) {
-                        $config = array_merge(
-                            $config,
-                            (array)call_user_func(
-                                $config['callback'],
-                                array_diff_key(
-                                    $config,
-                                    array_flip(['action', 'callback', 'priority'])
-                                )
-                            )
-                        );
-                    }
-                    unset($config['action'], $config['callback'], $config['priority']);
-                    $this->enqueueStyle($key, $config);
-                },
-                $config['priority'] ?? 10
-            );
-        }
-    }
-
-    private function processScripts()
-    {
-        foreach ($this->scripts as $key => &$config) {
-            add_action(
-                $config['action'] ?? 'init',
-                function () use ($key, &$config) {
-                    if (isset($config['callback']) && is_callable($config['callback'])) {
-                        $config = array_merge(
-                            $config,
-                            (array)call_user_func(
-                                $config['callback'],
-                                array_diff_key(
-                                    $config,
-                                    array_flip(['action', 'callback', 'priority'])
-                                )
-                            )
-                        );
-                    }
-                    unset($config['action'], $config['callback'], $config['priority']);
-                    $this->enqueueScript($key, $config);
-                },
-                $config['priority'] ?? 10
-            );
-        }
-    }
-
-    protected function __construct(?\NovemBit\CCA\common\Container $parent = null, $params = [])
-    {
-        parent::__construct($parent, $params);
-
-        if ((!empty($this->scripts) || !empty($this->styles)) && !$this->getAssetsRootURI()) {
-            trigger_error('Component $assets_relative_uri property not defined', E_USER_ERROR);
-        }
-
-        $this->processStyles();
-        $this->processScripts();
-    }
-
-    public function getAssetsRootURI( string $relative = '' )
-    {
-        $uri = null;
+        $uri = '';
         if (isset($this->assets_root_uri)) {
             $uri = trailingslashit($this->assets_root_uri) . ltrim($relative, '/');
         } elseif($this->getParent()) {
@@ -90,9 +137,20 @@ abstract class Container extends \NovemBit\CCA\common\Container
         return $uri;
     }
 
-    public function getAssetsRootPath( string $relative = '' )
+    /**
+     * Component assets root path
+     * @var null|string
+     */
+    protected $assets_root_path = null;
+
+    /**
+     * Get component assets path
+     * @param  string  $relative  Optional: relative path to specific file
+     * @return string
+     */
+    public function getAssetsRootPath( string $relative = '' ): string
     {
-        $path = null;
+        $path = '';
         if (isset($this->assets_root_path)) {
             $path = wp_normalize_path($this->assets_root_path . '/' . $relative);
         } elseif ($this->getParent()) {
@@ -101,199 +159,33 @@ abstract class Container extends \NovemBit\CCA\common\Container
         return $path;
     }
 
+    /**
+     * Get component version
+     * @return string
+     */
     public function getVersion()
     {
         return $this->version ?? ($this->getParent() ? $this->getParent()->getVersion() : null) ?? 'N/A';
     }
 
     /**
-     * Callback method to edit style tag and modify its attributes
-     * @hooked in "style_loader_tag" filter
-     * @param string  $tag  Current tag
-     * @param string  $handle  Style handle name
-     * @return string
+     * Execute additional functionality before component initialize
      */
-    public function editStyleLoaderTag($tag, $handle)
+    public function beforeInit(): void
     {
-        $styles = array_filter($this->styles, function($style) {
-            return isset($style['attributes']) && !empty($style['attributes']);
-        });
-
-        if (isset($styles[$handle])) {
-            $attrs = [];
-            foreach ($styles[$handle]['attributes'] as $name => $value) {
-                if (!in_array($name, ['id', 'href'])) {
-                    if (in_array($name, ['rel', 'media'])) {
-                        $tag = preg_replace('/\s' . $name . '=("([^"]+)"|\'([^\']+)\')/', '', $tag);
-                    }
-
-                    if (is_null($value)) {
-                        $attrs[] = $name;
-                    } elseif ($value) {
-                        $attrs[] = $name . '="' . $value . '"';
-                    }
-                }
-            }
-
-            if (!empty($attrs)) {
-                $attrs[] = '/>';
-                $tag = str_replace('/>', join(' ', $attrs), $tag);
-            }
-        }
-
-        return $tag;
-    }
-
-    /**
-     * Enqueue single style
-     * @param string  $handle  Handle name
-     * @param array  $config  Handle configuration
-     */
-    private function enqueueStyle($handle, array $config)
-    {
-        $config = wp_parse_args(
-            $config,
-            [
-                'url'        => '',
-                'deps'       => [],
-                'asset'      => '',
-                'version'    => $this->getVersion(),
-                'media'      => 'all',
-                'external'   => false,
-                'attributes' => [],
-                'preload'    => [],
-                'register'   => false,
-                'withPath'   => false,
-            ]
-        );
-
-        if (!$config['url']) {
-            return;
-        }
-
-        if (is_array($config['preload']) && !empty($config['preload'])) {
-            $preload_config = array_merge($config, [
-                'preload' => [],
-                'attributes' => array_merge($config['preload'], [
-                    'rel' => 'preload'
-                ]),
-                'register' => false,
-                'withPath' => false,
-            ]);
-            $this->styles[$handle . '-preload'] = $preload_config;
-            $this->enqueueStyle($handle . '-preload', $preload_config);
-        }
-
-        if (is_array($config['attributes']) && !empty($config['attributes'])) {
-            add_filter('style_loader_tag', [$this, 'editStyleLoaderTag'], 10, 2);
-        }
-
-        $config['dependencies'] = $config['deps'];
-        unset($config['deps']);
-        if ($config['asset']) {
-            $assets = [];
-            $asset_file = $this->getAssetsRootPath($config['asset']);
-            if ( file_exists( $asset_file ) ) {
-                $assets = include( $asset_file );
-            }
-            $config = wp_parse_args($assets, $config);
-        }
-
-        if (!!$config['register']) {
-            wp_register_style(
-                $handle,
-                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
-                $config['dependencies'],
-                $config['version'],
-                $config['media']
-            );
-        } else {
-            wp_enqueue_style(
-                $handle,
-                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
-                $config['dependencies'],
-                $config['version'],
-                $config['media']
-            );
-        }
-
-        if (!!$config['withPath'] && !$config['external']) {
-            wp_style_add_data($handle, 'path', $this->getAssetsRootPath($config['url']));
+        if (!$this instanceof AssetsManager) {
+            $this->components['assetsManager'] = AssetsManager::class;
         }
     }
 
     /**
-     * Enqueue single script
-     * @param string  $handle  Handle name
-     * @param array  $config  Handle configuration
+     * Execute additional functionality after component full initialize
      */
-    private function enqueueScript($handle, array $config)
+    public function afterInit(): void
     {
-        $config = wp_parse_args(
-            $config,
-            [
-                'url'       => '',
-                'deps'      => [],
-                'asset'     => '',
-                'version'   => $this->getVersion(),
-                'in_footer' => false,
-                'external'  => false,
-                'data'      => [],
-                'register'  => false,
-            ]
-        );
-
-        if (!$config['url']) {
-            return;
+        if ($this->hasComponent('assetsManager')) {
+            $this->getComponent('assetsManager')->run();
         }
-
-        $config['dependencies'] = $config['deps'];
-        unset($config['deps']);
-        if ($config['asset']) {
-            $assets = [];
-            $asset_file = $this->getAssetsRootPath($config['asset']);
-            if ( file_exists( $asset_file ) ) {
-                $assets = include( $asset_file );
-            }
-            $config = wp_parse_args($assets, $config);
-        }
-
-        // 1. Register / Enqueue
-        if (!!$config['register']) {
-            wp_register_script(
-                $handle,
-                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
-                $config['dependencies'],
-                $config['version'],
-                $config['in_footer']
-            );
-        } else {
-            wp_enqueue_script(
-                $handle,
-                (!!$config['external'] ? $config['url'] : $this->getAssetsRootURI($config['url'])),
-                $config['dependencies'],
-                $config['version'],
-                $config['in_footer']
-            );
-        }
-
-        // 2. Localize
-        foreach ($config['data'] as $localize) {
-            wp_localize_script($handle, $localize['name'], $localize['data']);
-        };
-    }
-
-    /**
-     * @param  string  $handle_name
-     * @param  string  $name
-     * @param $data
-     */
-    public function localizeScript(string $handle_name, string $name, $data)
-    {
-        $this->scripts[$handle_name]['data'][] = [
-            'name' => $name,
-            'data' => $data
-        ];
     }
 
 }
