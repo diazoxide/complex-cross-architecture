@@ -38,7 +38,8 @@ class AssetsManager extends Container {
         foreach ($this->getParent()->getStyles() as $handle => $config) {
             add_action(
                 $config['action'] ?? 'init',
-                function () use ($handle, $config) {
+                function () use ($handle) {
+                    $config = $this->getParent()->getStyle($handle);
                     if (isset($config['callback']) && is_callable($config['callback'])) {
                         $config = array_merge(
                             $config,
@@ -68,7 +69,8 @@ class AssetsManager extends Container {
         foreach ($this->getParent()->getScripts() as $handle => $config) {
             add_action(
                 $config['action'] ?? 'init',
-                function () use ($handle, $config) {
+                function () use ($handle) {
+                    $config = $this->getParent()->getScript($handle);
                     if (isset($config['callback']) && is_callable($config['callback'])) {
                         $config = array_merge(
                             $config,
