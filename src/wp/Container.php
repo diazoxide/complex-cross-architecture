@@ -95,7 +95,7 @@ abstract class Container extends \NovemBit\CCA\common\Container
      * @param  string  $handle  Handle name
      * @param  array  $config  Script configuration
      */
-    final public function addScripts(string $handle, array $config): void
+    final public function addScript(string $handle, array $config): void
     {
         $this->scripts[$handle] = $config;
     }

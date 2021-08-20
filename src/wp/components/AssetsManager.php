@@ -35,10 +35,10 @@ class AssetsManager extends Container {
      */
     private function executeStyles()
     {
-        foreach ($this->getParent()->getStyles() as $key => &$config) {
+        foreach ($this->getParent()->getStyles() as $handle => $config) {
             add_action(
                 $config['action'] ?? 'init',
-                function () use ($key, &$config) {
+                function () use ($handle, $config) {
                     if (isset($config['callback']) && is_callable($config['callback'])) {
                         $config = array_merge(
                             $config,
@@ -52,7 +52,8 @@ class AssetsManager extends Container {
                         );
                     }
                     unset($config['action'], $config['callback'], $config['priority']);
-                    $this->enqueueStyle($key, $config);
+                    $this->getParent()->addStyle($handle, $config);
+                    $this->enqueueStyle($handle, $config);
                 },
                 $config['priority'] ?? 10
             );
@@ -64,10 +65,10 @@ class AssetsManager extends Container {
      */
     private function executeScripts()
     {
-        foreach ($this->getParent()->getScripts() as $key => &$config) {
+        foreach ($this->getParent()->getScripts() as $handle => $config) {
             add_action(
                 $config['action'] ?? 'init',
-                function () use ($key, &$config) {
+                function () use ($handle, $config) {
                     if (isset($config['callback']) && is_callable($config['callback'])) {
                         $config = array_merge(
                             $config,
@@ -81,7 +82,8 @@ class AssetsManager extends Container {
                         );
                     }
                     unset($config['action'], $config['callback'], $config['priority']);
-                    $this->enqueueScript($key, $config);
+                    $this->getParent()->addScript($handle, $config);
+                    $this->enqueueScript($handle, $config);
                 },
                 $config['priority'] ?? 10
             );
