@@ -1,50 +1,28 @@
 <?php
+
 namespace NovemBit\CCA\wp\components;
 
 /**
  * Class Preloader
  * @package NovemBit\CCA\wp\components
  */
-class Preloader {
+class Preloader
+{
 
     /**
-     * @var Preloader Unique instance
-     */
-    private static $instance;
-
-    /**
-     * @return Preloader|static
-     */
-    public static function instance(): Preloader
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new static();
-        }
-
-        return self::$instance;
-    }
-
-    /**
+     * Associated data
      * @var array[]
      */
-    private $data = [
+    private static array $data = [
         'preload' => [],
         'preconnect' => []
     ];
 
     /**
-     * Preloader constructor.
-     */
-    private function __construct()
-    {
-        add_action('wp_head', [$this, 'inject'], 2);
-    }
-
-    /**
      * Inject single item
      * @param  array  $item  Item configuration
      */
-    private function injectItem(array $item): void
+    private static function injectItem(array $item): void
     {
         unset($item['order']);
         $tag = '<link';
@@ -62,7 +40,7 @@ class Preloader {
      *
      * @return int
      */
-    private function sort(array $a, array $b): int
+    private static function sort(array $a, array $b): int
     {
         return absint($a['order']) - absint($b['order']);
     }
@@ -71,11 +49,11 @@ class Preloader {
      * Inject data
      * @hooked in "wp_head" action
      */
-    public function inject(): void
+    public static function inject(): void
     {
-        foreach($this->data as $data) {
-            usort($data, [$this, 'sort']);
-            array_map([$this, 'injectItem'], $data);
+        foreach (self::$data as $data) {
+            usort($data, [__CLASS__, 'sort']);
+            array_map([__CLASS__, 'injectItem'], $data);
         }
     }
 
@@ -84,13 +62,12 @@ class Preloader {
      * @param  string  $href  Preload URL
      * @param  string  $as    Preload type
      * @param  array  $attr  Optional: Additional attributes
-     * @return $this
      */
-    public function addPreload(string $href, string $as, array $attr = []): Preloader
+    public static function addPreload(string $href, string $as, array $attr = []): void
     {
         if ($href) {
             unset($attr['href'], $attr['rel'], $attr['as']);
-            $this->data['preload'][md5($href)] = array_merge(
+            self::$data['preload'][md5($href)] = array_merge(
                 [
                     'rel' => 'preload',
                     'as' => $as,
@@ -100,21 +77,18 @@ class Preloader {
                 $attr
             );
         }
-
-        return $this;
     }
 
     /**
      * Add item for preconnect
      * @param  string  $href  Preconnect URL
      * @param  array  $attr  Optional: Additional attributes
-     * @return $this
      */
-    public function addPreconnect(string $href, array $attr = []): Preloader
+    public static function addPreconnect(string $href, array $attr = []): void
     {
         if ($href) {
             unset($attr['href'], $attr['rel']);
-            $this->data['preconnect'][md5($href)] = array_merge(
+            self::$data['preconnect'][md5($href)] = array_merge(
                 [
                     'rel' => 'preconnect',
                     'href' => $href,
@@ -123,9 +97,8 @@ class Preloader {
                 $attr
             );
         }
-
-        return $this;
     }
 
-
 }
+
+add_action('wp_head', [Preloader::class, 'inject'], 2);

@@ -56,15 +56,6 @@ abstract class Theme extends Container
     abstract public function getName(): string;
 
     /**
-     * Get preloader instance
-     * @return Preloader
-     */
-    final public function getPreloader(): Preloader
-    {
-        return Preloader::instance();
-    }
-
-    /**
      * Get theme directory
      * @return string
      */

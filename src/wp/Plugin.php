@@ -80,15 +80,6 @@ abstract class Plugin extends Container
     abstract public function getName(): string;
 
     /**
-     * Get preloader instance
-     * @return Preloader
-     */
-    final public function getPreloader(): Preloader
-    {
-        return Preloader::instance();
-    }
-
-    /**
      * @return string
      */
     public function getMUPluginName(): string
