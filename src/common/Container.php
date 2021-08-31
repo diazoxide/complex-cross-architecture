@@ -123,20 +123,6 @@ abstract class Container
     }
 
     /**
-     * Allow executing actions before child components initializations
-     */
-    public function beforeInit(): void
-    {
-    }
-
-    /**
-     * Allow executing actions after child components initializations
-     */
-    public function afterInit(): void
-    {
-    }
-
-    /**
      * @param array|null $params
      */
     abstract protected function main(?array $params = []): void;
@@ -152,9 +138,7 @@ abstract class Container
 
         $this->wakeup($params);
 
-        $this->beforeInit();
         $this->initComponents();
-        $this->afterInit();
 
         $this->main($params);
     }
