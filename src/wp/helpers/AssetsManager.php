@@ -14,6 +14,43 @@ final class AssetsManager
     private string $url;
 
     /**
+     * Assets root path
+     * @var string
+     */
+    private string $path;
+
+    /**
+     * All styles
+     * @var array
+     */
+    private array $styles = [];
+
+    /**
+     * All scripts
+     * @var array
+     */
+    private array $scripts = [];
+
+    /**
+     * Version to use for assets
+     * @var string
+     */
+    private string $version;
+
+    /**
+     * AssetsManager constructor.
+     * @param  string  $url  Assets root URL
+     * @param  string  $path Assets root path
+     * @param  string $version Version to use for attached assets
+     */
+    public function __construct(string $url, string $path, string $version)
+    {
+        $this->url = trailingslashit($url);
+        $this->path = $path;
+        $this->version = $version;
+    }
+
+    /**
      * Get assets root URL
      * @param  string  $relative  Optional: relative url to specific location
      *
@@ -23,12 +60,6 @@ final class AssetsManager
     {
         return $this->url ? $this->url . $relative : '';
     }
-
-    /**
-     * Assets root path
-     * @var string
-     */
-    private string $path;
 
     /**
      * Get assets root path
@@ -52,12 +83,6 @@ final class AssetsManager
             'priority' => 10
         ];
     }
-
-    /**
-     * All styles
-     * @var array
-     */
-    private array $styles = [];
 
     /**
      * Add a single style
@@ -120,12 +145,6 @@ final class AssetsManager
     {
         return $this->styles;
     }
-
-    /**
-     * All scripts
-     * @var array
-     */
-    private array $scripts = [];
 
     /**
      * Add a single script
@@ -209,16 +228,10 @@ final class AssetsManager
     }
 
     /**
-     * Version to use for assets
-     * @var string
-     */
-    private $version = '';
-
-    /**
      * Get configured version
      * @return string
      */
-    public function getVersion()
+    public function getVersion(): string
     {
         return $this->version;
     }
@@ -246,19 +259,6 @@ final class AssetsManager
         unset($config['action'], $config['callback'], $config['priority']);
 
         return $config;
-    }
-
-    /**
-     * AssetsManager constructor.
-     * @param  string  $url  Assets root URL
-     * @param  string  $path Assets root path
-     * @param  string|int $version Version to use for attached assets
-     */
-    public function __construct(string $url, string $path, $version)
-    {
-        $this->url = trailingslashit($url);
-        $this->path = $path;
-        $this->version = $version;
     }
 
     /**

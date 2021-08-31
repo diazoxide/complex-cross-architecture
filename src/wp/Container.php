@@ -28,16 +28,16 @@ abstract class Container extends \NovemBit\CCA\common\Container
      * Assets manager instance
      * @var AssetsManager|null
      */
-    private $assets_manager;
+    private ?AssetsManager $assets_manager;
 
     /**
      * Setup assets manager instance
      *
      * @param string  $url  URL to assets root
      * @param string $path  Path to assets root
-     * @param  int|string  $version  Version to use
+     * @param string  $version  Version to use
      */
-    final public function setupAssetsManager(string $url, string $path, $version)
+    final public function setupAssetsManager(string $url, string $path, string $version)
     {
         if (!isset($this->assets_manager) && $url && $path && $version) {
             $this->assets_manager = new AssetsManager($url, $path, $version);
@@ -61,7 +61,7 @@ abstract class Container extends \NovemBit\CCA\common\Container
     protected function __construct(?Container $parent = null, array $params = [])
     {
         parent::__construct($parent, $params);
-        if ($this->assets_manager) {
+        if (isset($this->assets_manager)) {
             $this->assets_manager->run();
         }
     }
