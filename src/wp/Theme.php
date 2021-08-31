@@ -1,7 +1,7 @@
 <?php
 namespace NovemBit\CCA\wp;
 
-use NovemBit\CCA\wp\components\Preloader;
+use NovemBit\CCA\wp\helpers\Preloader;
 
 /**
  * Class Theme
@@ -36,10 +36,6 @@ abstract class Theme extends Container
         // Configure MU components
         unset($this->components['preloader']);
 
-        // Setup assets data
-        $this->assets_root_uri = $this->getParentDirectoryUri();
-        $this->assets_root_path = $this->getParentDirectory();
-
         // Setup hooks
         if (function_exists('add_action')) {
             add_action('after_switch_theme', [$this, 'onActivate'], 10, 2);
@@ -53,7 +49,28 @@ abstract class Theme extends Container
      * Theme unique name
      * @return string
      */
-    abstract public function getName(): string;
+    public function getName(): string
+    {
+        return wp_get_theme(get_template())->name;
+    }
+
+    /**
+     * Get theme version
+     * @return string
+     */
+    public function getVersion(): string
+    {
+        if (defined('XPAC_DEV_MODE') && XPAC_DEV_MODE) {
+            $version = time();
+        } else {
+            static $version = null;
+            if (!$version) {
+                $version = wp_get_theme(get_template())->version;
+            }
+        }
+
+        return $version;
+    }
 
     /**
      * Get theme directory

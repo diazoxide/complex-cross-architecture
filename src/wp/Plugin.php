@@ -1,10 +1,7 @@
 <?php
 
-
 namespace NovemBit\CCA\wp;
 
-
-use NovemBit\CCA\wp\components\Preloader;
 use RuntimeException;
 
 abstract class Plugin extends Container
@@ -27,7 +24,7 @@ abstract class Plugin extends Container
      * Main singleton instance of class
      * @var array
      * */
-    private static $_instances = [];
+    private static $instances = [];
 
     /**
      * @param null $plugin_file
@@ -36,12 +33,11 @@ abstract class Plugin extends Container
      */
     public static function instance($plugin_file = null)
     {
-        
-        if (!isset(self::$_instances[static::class])) {
-            self::$_instances[static::class] = new static($plugin_file);
+        if (!isset(self::$instances[static::class])) {
+            self::$instances[static::class] = new static($plugin_file);
         }
 
-        return self::$_instances[static::class];
+        return self::$instances[static::class];
     }
 
     /**
@@ -52,14 +48,10 @@ abstract class Plugin extends Container
     protected function __construct($plugin_file)
     {
         // Configure MU components
-        unset($this->components['preloader']);
+        unset($this->components['preloader'], $this->components['assetsManager']);
 
         // Setup plugin main file
         $this->plugin_file = $plugin_file;
-
-        // Setup assets data
-        $this->assets_root_uri = $this->getPluginDirUrl();
-        $this->assets_root_path = $this->getPluginDirPath();
 
         // Setup hooks
         if (function_exists('register_activation_hook')) {
@@ -74,10 +66,34 @@ abstract class Plugin extends Container
     }
 
     /**
-     * Plugin unique name
+     * Get plugin unique name
      * @return string
      */
-    abstract public function getName(): string;
+    public function getName(): string
+    {
+        return get_plugin_data($this->plugin_file, false, false)['Name'];
+    }
+
+    /**
+     * Get plugin version
+     * @return string
+     */
+    public function getVersion(): string
+    {
+        if (defined('XPAC_DEV_MODE') && XPAC_DEV_MODE) {
+            $version = time();
+        } else {
+            static $version = null;
+            if (!$version) {
+                if (!function_exists('get_plugin_data')) {
+                    require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+                }
+                $version = get_plugin_data($this->plugin_file, false, false)['Version'];
+            }
+        }
+
+        return $version;
+    }
 
     /**
      * @return string
