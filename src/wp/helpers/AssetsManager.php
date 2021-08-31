@@ -478,8 +478,7 @@ final class AssetsManager
             }
 
             if (!empty($attrs)) {
-                $attrs[] = '></script>';
-                $tag     = str_replace('></script>', join(' ', $attrs), $tag);
+                $tag = str_replace('></script>', ' ' . join(' ', $attrs) . '></script>', $tag);
             }
         }
 
