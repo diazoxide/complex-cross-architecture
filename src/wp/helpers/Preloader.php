@@ -95,7 +95,7 @@ final class Preloader
      * @param  string  $href  Preconnect URL
      * @param  array  $attr  Optional: Additional attributes
      */
-    public static function addPreconnect(string $href, array $attr = []): void
+    public static function addPreConnect(string $href, array $attr = []): void
     {
         if ($href) {
             unset($attr['href'], $attr['rel']);
