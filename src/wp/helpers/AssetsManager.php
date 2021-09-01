@@ -65,6 +65,17 @@ final class AssetsManager
     }
 
     /**
+     * Get assets root URL with versioning query argument
+     * @param  string  $relative  Optional: relative url to specific location
+     *
+     * @return string
+     */
+    public function getVersionedUrl(string $relative = ''): string
+    {
+        return $this->url ? add_query_arg('ver', $this->getVersion(), $this->url . $relative) : '';
+    }
+
+    /**
      * Get assets root path
      *
      * @param  string  $relative  Optional: relative path to specific location
@@ -348,7 +359,6 @@ final class AssetsManager
 
         if (isset($styles[$handle])) {
             $attrs = [];
-            echo '<pre translate="no">'; var_dump($styles[$handle]['attributes']); echo '</pre>';
             foreach ($styles[$handle]['attributes'] as $name => $value) {
                 if (is_numeric($name) || !in_array($name, ['id', 'href'])) {
                     if (in_array($name, ['rel', 'media'])) {
@@ -357,12 +367,7 @@ final class AssetsManager
                             continue;
                         }
                     }
-
-                    if (is_numeric($name)) {
-                        $attrs[] = $value;
-                    } else {
-                        $attrs[] = $name . '="' . $value . '"';
-                    }
+                    $attrs[] = is_numeric($name) ? $value : ($name . '="' . $value . '"');
                 }
             }
 
@@ -471,19 +476,40 @@ final class AssetsManager
 
         if (isset($scripts[$handle])) {
             $attrs = [];
+            $inline_script_attrs = ['before' => [], 'after' => []];
             foreach ($scripts[$handle]['attributes'] as $name => $value) {
-                if (is_numeric($name) || !in_array($name, ['id', 'src'])) {
-                    if (is_numeric($name)) {
-                        $attrs[] = $value;
-                    } else {
-                        $attrs[] = $name . '="' . $value . '"';
-                    }
+                switch (true) {
+                    case ('inline-before' === $name):
+                        $inline_script_attrs['before'] = $value;
+                        break;
+                    case ('inline-after' === $name):
+                        $inline_script_attrs['after'] = $value;
+                        break;
+                    case is_numeric($name):
+                    case !in_array($name, ['id', 'src']):
+                        $attrs[] = is_numeric($name) ? $value : ($name . '="' . $value . '"');
+                        break;
                 }
             }
 
             if (!empty($attrs)) {
                 array_unshift($attrs, '');
                 $tag = preg_replace('/><\/script>/', join(' ', $attrs) . '$0', $tag);
+            }
+
+            foreach (['before', 'after'] as $position) {
+                if (!empty($inline_script_attrs[$position])) {
+                    $attrs = [];
+                    foreach ($inline_script_attrs[$position] as $name => $value) {
+                        $attrs[] = is_numeric($name) ? $value : ($name . '="' . $value . '"');
+                    }
+                    array_unshift($attrs, '');
+                    $tag = preg_replace(
+                        "/id=[\"|']{$handle}-js-{$position}[\"|']/",
+                        '$0' . join(' ', $attrs),
+                        $tag
+                    );
+                }
             }
         }
 
