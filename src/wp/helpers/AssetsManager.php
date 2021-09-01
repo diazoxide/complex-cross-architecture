@@ -348,15 +348,19 @@ final class AssetsManager
 
         if (isset($styles[$handle])) {
             $attrs = [];
+            echo '<pre translate="no">'; var_dump($styles[$handle]['attributes']); echo '</pre>';
             foreach ($styles[$handle]['attributes'] as $name => $value) {
-                if (!in_array($name, ['id', 'href'])) {
+                if (is_numeric($name) || !in_array($name, ['id', 'href'])) {
                     if (in_array($name, ['rel', 'media'])) {
                         $tag = preg_replace('/\s' . $name . '=("([^"]+)"|\'([^\']+)\')/', '', $tag);
+                        if (!$value) {
+                            continue;
+                        }
                     }
 
-                    if (is_null($value)) {
-                        $attrs[] = $name;
-                    } elseif ($value) {
+                    if (is_numeric($name)) {
+                        $attrs[] = $value;
+                    } else {
                         $attrs[] = $name . '="' . $value . '"';
                     }
                 }
@@ -468,17 +472,18 @@ final class AssetsManager
         if (isset($scripts[$handle])) {
             $attrs = [];
             foreach ($scripts[$handle]['attributes'] as $name => $value) {
-                if (!in_array($name, ['id', 'src'])) {
-                    if (is_null($value)) {
-                        $attrs[] = $name;
-                    } elseif ($value) {
+                if (is_numeric($name) || !in_array($name, ['id', 'src'])) {
+                    if (is_numeric($name)) {
+                        $attrs[] = $value;
+                    } else {
                         $attrs[] = $name . '="' . $value . '"';
                     }
                 }
             }
 
             if (!empty($attrs)) {
-                $tag = str_replace('></script>', ' ' . join(' ', $attrs) . '></script>', $tag);
+                array_unshift($attrs, '');
+                $tag = preg_replace('/><\/script>/', join(' ', $attrs) . '$0', $tag);
             }
         }
 
@@ -493,6 +498,7 @@ final class AssetsManager
      */
     private function enqueueScript(string $handle, array $config): void
     {
+
         $config = wp_parse_args(
             $config,
             [

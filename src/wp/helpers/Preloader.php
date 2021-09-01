@@ -28,7 +28,7 @@ final class Preloader
         unset($item['order']);
         $tag = '<link';
         foreach ($item as $prop => $value) {
-            $tag .= $value ? sprintf(' %s="%s"', $prop, $value) : sprintf(' %s', $prop);
+            $tag .= is_numeric($prop) ? sprintf(' %s', $value) : sprintf(' %s="%s"', $prop, $value);
         }
         $tag .= " />\n";
 
