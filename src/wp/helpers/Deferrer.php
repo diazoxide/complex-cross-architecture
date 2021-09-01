@@ -22,18 +22,18 @@ class Deferrer
     private static array $callbacks = [];
 
     /**
-     * Add specific callback to deferring detection
-     * @param  callable  $callback  Callback method
+     * Check whether handle is already defered
+     * @param  string  $handle  Handle name
+     *
+     * @return bool
      */
-    public static function addCallback(callable $callback): void
+    private static function isDeferred(string $handle): bool
     {
-        self::$callbacks[] = $callback;
+        return in_array($handle, self::$scripts);
     }
 
     /**
      * Setup component
-     *
-     * @param  array  $params
      */
     public static function init(): void
     {
@@ -43,35 +43,40 @@ class Deferrer
     }
 
     /**
+     * Add specific callback to deferring detection
+     *
+     * @param  callable  $callback  Callback method
+     */
+    public static function addCallback(callable $callback): void
+    {
+        self::$callbacks[] = $callback;
+    }
+
+    /**
      * Check script for the possibility to be deferred
      *
      * @param  string  $handle  Handle name
      */
-    public static function checkForDeferring(string $handle, callable $callback): void
+    public static function check(string $handle, callable $callback): bool
     {
-        $deps = [];
-        if (isset(wp_scripts()->registered[$handle])) {
-            $deps = wp_scripts()->registered[$handle]->deps;
-        }
-
-        if (call_user_func($callback, $handle)) {
-            self::$scripts[] = $handle;
+        $return = false;
+        if (self::isDeferred($handle)) {
+            $return = true;
         } else {
+            if (call_user_func($callback, $handle)) {
+                self::$scripts[] = $handle;
+                $return          = true;
+            }
+
+            $deps = isset(wp_scripts()->registered[$handle]) ? wp_scripts()->registered[$handle]->deps : [];
             foreach ($deps as $dep) {
-                if (call_user_func($callback, $dep)) {
-                    self::$scripts[] = $handle;
-                    break;
+                if (!self::isDeferred($dep)) {
+                    return self::check($dep, $callback);
                 }
             }
         }
 
-        foreach ($deps as $handle) {
-            if (!in_array($handle, self::$scripts)) {
-                self::checkForDeferring($handle, $callback);
-            }
-        }
-
-        self::$scripts = array_unique(self::$scripts);
+        return $return;
     }
 
     /**
@@ -85,9 +90,11 @@ class Deferrer
     public static function editScriptLoaderTag(string $tag, string $handle): string
     {
         foreach (self::$callbacks as $callback) {
-            self::checkForDeferring($handle, $callback);
+            if (self::check($handle, $callback)) {
+                break;
+            }
         }
-        if (in_array($handle, self::$scripts)) {
+        if (self::isDeferred($handle)) {
             $tag = preg_replace('/><\/script>/', ' defer$0', $tag);
         }
 
