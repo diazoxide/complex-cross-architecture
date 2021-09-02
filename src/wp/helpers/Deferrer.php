@@ -109,7 +109,6 @@ class Deferrer
 
         return $tag;
     }
-
 }
 
 Deferrer::init();
